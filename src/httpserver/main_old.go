@@ -1,0 +1,244 @@
+package main
+
+import (
+    "fmt"
+    "net/http"
+    "io/ioutil"
+    "log"
+    "os"
+    "github.com/gorilla/mux"
+    "encoding/xml"
+    "time"
+)
+
+const (
+    LOG_FILE_PATH = "http_server_log"
+)
+
+var channel_signal chan int
+
+type xmlResult struct {
+	XMLName   xml.Name  `xml:"xmlResult"`
+	Handup    handupData `xml:"data"`
+}
+
+type handupData struct {
+	XMLName   xml.Name  `xml:"data"`
+	Stus     []stuhandup `xml:"studentHandUpStatus"`
+}
+
+type stuhandup struct {
+	XMLName xml.Name `xml:"studentHandUpStatus"`
+	ApId   string   `xml:"apId"`
+	Classname string  `xml:"classname"`
+	EnableHandup  string `xml:"enableHandUp"`
+	ID        string   `xml:"id"`
+	Name      string   `xml:"name"`
+	Seat      string   `xml:"seat"`
+}
+
+type XmlReturnHandler func(http.ResponseWriter, *http.Request) error
+func (f XmlReturnHandler)ServeHTTP(w http.ResponseWriter, r *http.Request){
+	f(w,r)
+}
+
+type Routes []Route
+
+type Route struct {
+	Name string
+	Method string
+	Pattern string
+	Handler http.Handler
+}
+
+var  g_count int
+
+var routes = Routes{
+	Route{Name:"classinfo", Method:"POST", Pattern: "/service/desktops/classinfo", Handler:XmlReturnHandler(ListClassInfo)},
+	Route{Name:"handup", Method:"GET", Pattern: "/service/classes/list_handupstu", Handler:XmlReturnHandler(ListHandupstu)},
+    Route{Name:"liststu", Method:"GET", Pattern: "/service/classes/list_stu", Handler:XmlReturnHandler(Liststu)},
+    Route{Name:"exitteach", Method:"POST", Pattern: "/service/classes/tec_exit_desktop", Handler:XmlReturnHandler(Tec_Exit_desktop)},
+}
+
+func NewRouter() *mux.Router {
+    router := mux.NewRouter().StrictSlash(true)
+    for _, route := range routes {
+    	router.Methods(route.Method).Path(route.Pattern).Name(route.Name).Handler(route.Handler)
+    }
+    return router
+}
+
+func mylog(s string){
+    filename := LOG_FILE_PATH
+    logfile, err := os.OpenFile(filename, os.O_RDWR| os.O_CREATE | os.O_APPEND, 0)
+    defer logfile.Close()
+    if (err != nil){
+        log.Fatalln("open file error ! \n")
+    }
+    debuglog := log.New(logfile, "[Debug]", log.Ldate |log.Ltime | log.Llongfile)
+    debuglog.Printf(s)
+}
+
+
+func ListClassInfo(w http.ResponseWriter, r *http.Request) error {
+	sayhelloName(w, r, "classinfo")
+	return nil
+}
+
+
+func ListHandupstu(w http.ResponseWriter, r *http.Request) error {
+    if g_count > 100 {
+        g_count = 0
+    }
+    if g_count % 2 == 0 {
+        sayhelloName(w, r, "list_handupstu")
+    } else {
+        sayhelloName(w, r, "list_handupstu3")
+    }
+    g_count++
+	return nil
+}
+
+func Liststu(w http.ResponseWriter, r *http.Request) error {
+    sayhelloName(w, r, "list_stu")
+    return nil
+}
+
+func Tec_Exit_desktop(w http.ResponseWriter, r *http.Request) error {
+    sayhelloName(w, r, "tec_exit_desktop")
+    return nil
+}
+
+var g_listcount int
+func sayhelloName(w http.ResponseWriter, r  *http.Request, s string ) {
+    stdir := "";
+    if s == "classinfo" {
+        stdir = "service/desktops"
+    } else {
+        stdir = "service/classes"
+    }
+    stdir += "/"
+    stdir += s
+    stdir += "/"
+
+    if s == "list_stu" && g_listcount > 3 {
+        stdir += "result.xml"
+        g_listcount = 0
+    }else {
+        stdir += s
+        stdir += ".xml"
+    }
+    g_listcount++
+    mylog(stdir)
+    content, err := ioutil.ReadFile(stdir)
+    if err != nil {
+        fmt.Printf("error : %v \n", err)
+        log.Fatal(err)
+        return
+    }
+    r.ParseForm()
+    szMac := r.FormValue("vmMac")
+    mylog(szMac)
+    fmt.Fprintf(w, string(content))
+}
+
+var g_thrdcount int
+func handupthrd() {
+    for true {
+        stdir := "service/classes"
+        s := "list_handupstu"
+        if g_thrdcount % 2 == 0 {
+            s = "list_handupstu"
+        } else {
+            s = "list_handupstu3"
+        }
+        stdir += "/"
+        stdir += s
+        stdir += "/"
+        stdir += s
+        stdir += ".xml"
+        updateHandup(stdir)
+        fmt.Println("xxxx thrd running .......")
+        g_thrdcount++
+        time.Sleep(2 * time.Second)
+    }
+    channel_signal <- 1
+}
+
+func updateHandup(s string) {
+    file, err := os.Open(s) // For read access.
+    var serr string;
+    if err != nil {
+        serr = fmt.Sprintf("error: %v", err)
+        //fmt.Printf("error: %v", err)
+        mylog(serr)
+        return
+    }
+    defer file.Close()
+    data, err := ioutil.ReadAll(file)
+    if err != nil {
+        //fmt.Printf("error: %v", err)
+        serr = fmt.Sprintf("error: %v", err)
+        mylog(serr)
+        return
+    }
+    v := xmlResult{}
+    err = xml.Unmarshal(data, &v)
+    if err != nil {
+        //fmt.Printf("error: %v", err)
+        serr = fmt.Sprintf("error: %v", err)
+        mylog(serr)
+        return
+    }
+    fmt.Println(v)
+	for i, val := range v.Handup.Stus {
+		log.Println(val.ID)
+        if val.ID == "00:1a:4a:16:01:6e" {
+           log.Println("xxxxxxxxxxxxxxxxxxx")
+           if val.EnableHandup == "true" {
+               v.Handup.Stus[i].EnableHandup = "false"
+           }else{
+               v.Handup.Stus[i].EnableHandup = "true"
+           }
+        }
+        if val.ID == "00:1a:4a:16:01:71" {
+          log.Println("xxxxxxxxxxxxddddd")
+          if val.EnableHandup == "true" {
+              v.Handup.Stus[i].EnableHandup = "false"
+          }else{
+              v.Handup.Stus[i].EnableHandup = "true"
+          }
+        }
+		tmp := val.ID;
+		tmp += " ---- "
+		tmp += val.EnableHandup
+		//log.Println(tmp)
+        mylog(tmp)
+	}
+	//保存修改后的内容
+	xmlOutPut, outPutErr := xml.MarshalIndent(v, "", "")
+	if outPutErr == nil {
+		//加入XML头
+		headerBytes := []byte(xml.Header)
+		//拼接XML头和实际XML内容
+		xmlOutPutData := append(headerBytes, xmlOutPut...)
+		//写入文件
+		ioutil.WriteFile(s, xmlOutPutData, os.ModeAppend)
+
+		//fmt.Println("OK~")
+        mylog("Ok~")
+	} else {
+		//fmt.Println(outPutErr)
+        serr = fmt.Sprintf("error: %v", outPutErr)
+        mylog(serr)
+	}
+}
+
+func main() {
+    channel_signal = make(chan int)
+    go handupthrd()
+    router := NewRouter()
+    http.ListenAndServe(":9090", router)
+    <- channel_signal
+    fmt.Println("ddddddd  main exit .......")
+}
