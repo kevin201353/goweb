@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	_ "go-sqlite3"
 	"html/template"
+	"mylog"
 	"os"
 	"reflect"
 	"unsafe"
@@ -30,7 +31,9 @@ type LoginInfo struct {
 }
 
 type Photo struct {
-	Jpg string
+	Jpg  string
+	Sign string
+	Cam  int
 }
 
 var db *sql.DB
@@ -161,7 +164,8 @@ func uploadjson(w http.ResponseWriter, r *http.Request) {
 			log.Println("uploadPhoto Read failed:", err)
 		}
 		defer r.Body.Close()
-		fmt.Println("json data: ", b)
+		//fmt.Println("json data: ", b)
+		mylog.Log2("json data: ", b)
 		var photo Photo
 		err = json.Unmarshal(b, &photo)
 		if err != nil {
@@ -169,16 +173,19 @@ func uploadjson(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		fmt.Println("photo Jpg:", photo.Jpg)
-		decoded, err2 := base64.StdEncoding.DecodeString(photo.Jpg)
-		if err != nil {
-			fmt.Println("decode error:", err)
-			return
-		}
-		err2 = ioutil.WriteFile("./files/photo.jpg", decoded, 0666)
-		if err2 != nil {
-			log.Fatal("write photo file err:", err2)
-			return
-		}
+		mylog.Log2("photo Jpg: ", photo.Jpg, "Sign ", photo.Sign, "Cam: ", photo.Cam)
+
+		/*
+			decoded, err2 := base64.StdEncoding.DecodeString(photo.Jpg)
+			if err != nil {
+				fmt.Println("decode error:", err)
+				return
+			}
+			err2 = ioutil.WriteFile("./files/photo2.jpg", decoded, 0666)
+			if err2 != nil {
+				log.Fatal("write photo file err:", err2)
+				return
+			}*/
 	}
 }
 
@@ -193,7 +200,8 @@ func upgernal(w http.ResponseWriter, r *http.Request) {
 		}
 		defer r.Body.Close()
 		data := slicebytetostring(b)
-		fmt.Println("data 111: ", data)
+		//fmt.Println("data 111: ", data)
+		mylog.Log2("data 111: ", data)
 		decoded, err2 := base64.StdEncoding.DecodeString(data)
 		if err != nil {
 			fmt.Println("decode error:", err)
@@ -229,7 +237,7 @@ func main() {
 	}
 	//http.HandleFunc("/", sayhelloName)
 	http.HandleFunc("/", OnInput)
-	http.HandleFunc("/upload", uploadjson)
+	http.HandleFunc("/uploadJson", uploadjson)
 	http.HandleFunc("/upgernal", upgernal)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
