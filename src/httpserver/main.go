@@ -215,6 +215,18 @@ func upgernal(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getAllinfor(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		r.ParseForm()
+	} else {
+		//fmt.Println("getAllinfor")
+		//w.Write(stringtoslicebyte("getAllinfor"))
+		for {
+			time.Sleep(3000 * time.Millisecond)
+		}
+	}
+}
+
 func main() {
 	db, err = sql.Open("sqlite3", "my.db")
 	if err != nil {
@@ -239,6 +251,7 @@ func main() {
 	http.HandleFunc("/", OnInput)
 	http.HandleFunc("/uploadJson", uploadjson)
 	http.HandleFunc("/upgernal", upgernal)
+	http.HandleFunc("/getAllinfor", getAllinfor)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
