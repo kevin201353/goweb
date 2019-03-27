@@ -222,7 +222,7 @@ func getAllinfor(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println("getAllinfor")
 		//w.Write(stringtoslicebyte("getAllinfor"))
 		for {
-			time.Sleep(3000 * time.Millisecond)
+			//time.Sleep(3000 * time.Millisecond)
 		}
 	}
 }
