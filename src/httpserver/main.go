@@ -18,6 +18,8 @@ import (
 	"os"
 	"reflect"
 	"unsafe"
+	"strconv"
+	"time"
 )
 
 const maxUploadSize = 2 * 1024 * 2014 // 2 MB
@@ -25,9 +27,11 @@ const uploadPath = "./tmp"
 
 type LoginInfo struct {
 	XMLName   xml.Name `xml."Login"`
+	Cmd       int 
 	Operator  string
 	Sessionid string
-	SelType   string
+	Logtype   string
+	Tel       string
 }
 
 type Photo struct {
@@ -58,19 +62,23 @@ func slicebytetostring(b []byte) string {
 	return *(*string)(unsafe.Pointer(&sh))
 }
 
-func sayhelloName(w http.ResponseWriter, r *http.Request) {
+func DealRequst(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	fmt.Println(r.Form)
 	fmt.Println("path", r.URL.Path)
 	fmt.Println("scheme", r.URL.Scheme)
+	login2 := LoginInfo{}
 	if r.Method == "GET" {
 		login := LoginInfo{}
 		for k, v := range r.Form {
 			fmt.Println("key:", k)
 			fmt.Println("val:", strings.Join(v, ""))
 			login.Operator = r.Form.Get("operatorno")
-			login.SelType = r.Form.Get("logtype")
+			login.Logtype = r.Form.Get("logtype")
 			login.Sessionid = r.Form.Get("sessionid")
+			login.Tel = r.Form.Get("tel")
+			cmd, _ := strconv.Atoi(r.Form.Get("cmd"))
+			login.Cmd = cmd 
 		}
 		output, err := xml.MarshalIndent(login, "  ", "    ")
 		if err != nil {
@@ -80,20 +88,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Printf("write file error: %v\n", err)
 		}
-		stmt, err := db.Prepare("insert into userinfo(user, sessionid, logtype, created) values(?,?,?,?)")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer stmt.Close()
-		res, err := stmt.Exec(login.Operator, login.Sessionid, login.SelType, "2019-09-21")
-		if err != nil {
-			log.Fatal(err)
-		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Print(id)
+		login2 = login
 	}
 	fmt.Fprintf(w, "Hello astaxie!")
 	//查询数据
@@ -102,22 +97,54 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	for rows.Next() {
+	var bExist bool
+
+    for rows.Next() {
 		var uid int
 		var username string
-		var Sessionid string
-		var seltype string
+		var sessionid string
+		var logtype string
 		var created string
-		err = rows.Scan(&uid, &username, &Sessionid, &seltype, &created)
+		var tel string
+		err = rows.Scan(&uid, &username, &sessionid, &logtype, &tel, &created)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println(uid)
 		fmt.Println(username)
-		fmt.Println(Sessionid)
+		fmt.Println(sessionid)
+		fmt.Println(tel)
 		fmt.Println(created)
-	}
+
+
+        fmt.Println("login2: ", login2.Operator)
+		//检测用户名是否存在，存在且sessionid也存在登录成功
+    	if login2.Operator == username && login2.Sessionid == sessionid {
+            //成功
+            bExist = true
+            fmt.Sprintf("%s 登录成功", username)
+    	}
+    }
+
+    if !bExist { 
+         fmt.Println("新增记录")
+        stmt, err := db.Prepare("insert into userinfo(user, sessionid, logtype, tel, created) values(?,?,?,?,?)")
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer stmt.Close()
+		res, err := stmt.Exec(login2.Operator, login2.Sessionid, login2.Logtype, login2.Tel, time.Now())
+		if err != nil {
+			log.Fatal(err)
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Print(id)
+    }
 }
+
 
 func OnInput(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
@@ -239,7 +266,8 @@ func main() {
         user VARCHAR(64) NULL,
         sessionid VARCHAR(64) NULL,
 		logtype  VARCHAR(64) NULL,
-        created DATE NULL
+        tel  VARCHAR(64) NULL,
+        created  DATE  NULL
     );
     `
 	_, err = db.Exec(sql_table)
@@ -247,12 +275,12 @@ func main() {
 		log.Printf("%q: %s\n", err, sql_table)
 		return
 	}
-	//http.HandleFunc("/", sayhelloName)
-	http.HandleFunc("/", OnInput)
+	http.HandleFunc("/", DealRequst)
+	//http.HandleFunc("/", OnInput)
 	http.HandleFunc("/uploadJson", uploadjson)
 	http.HandleFunc("/upgernal", upgernal)
 	http.HandleFunc("/getAllinfor", getAllinfor)
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8008", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
