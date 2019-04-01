@@ -63,41 +63,60 @@ func slicebytetostring(b []byte) string {
 }
 
 func DealRequst(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	fmt.Println(r.Form)
-	fmt.Println("path", r.URL.Path)
-	fmt.Println("scheme", r.URL.Scheme)
-	login2 := LoginInfo{}
-	if r.Method == "GET" {
-		login := LoginInfo{}
-		for k, v := range r.Form {
-			fmt.Println("key:", k)
-			fmt.Println("val:", strings.Join(v, ""))
-			login.Operator = r.Form.Get("operatorno")
-			login.Logtype = r.Form.Get("logtype")
-			login.Sessionid = r.Form.Get("sessionid")
-			login.Tel = r.Form.Get("tel")
-			cmd, _ := strconv.Atoi(r.Form.Get("cmd"))
-			login.Cmd = cmd 
-		}
-		output, err := xml.MarshalIndent(login, "  ", "    ")
-		if err != nil {
-			fmt.Printf("error: %v\n", err)
-		}
-		err = ioutil.WriteFile("LoginInfo.xml", output, 0777)
-		if err != nil {
-			fmt.Printf("write file error: %v\n", err)
-		}
-		login2 = login
+    if r.Method == "GET" {
+    	r.ParseForm()
+    	fmt.Println(r.Form)
+    	fmt.Println("path", r.URL.Path)
+    	fmt.Println("scheme", r.URL.Scheme)
+    	//cmd, _ := strconv.Atoi(r.Form.Get("cmd"))
+    	cmd := r.Form.Get("cmd")
+    	switch cmd {
+            case GSE_LOGIN_REQUEST:
+                dealLoginReq(w,r)
+            case GSE_GET_FLIGHT:
+                dealFlightInfo(w,r)
+            case GSE_GET_ORIGIN:
+                //do here
+                dealOriginInfo(w,r)
+            case GSE_GET_FLISITE:
+                //do here
+                dealFlisiteInfo(w,r)
+            case GSE_GET_FLIGHT9C:
+                //do here
+                dealFlightInfo(w,r)
+            default: break
+    	}
+    }//if method
+}
+
+
+func dealLoginReq(w http.ResponseWriter, r *http.Request) {
+    login := LoginInfo{}
+    for k, v := range r.Form {
+    	fmt.Println("key:", k)
+    	fmt.Println("val:", strings.Join(v, ""))
+    	login.Operator = r.Form.Get("operatorno")
+    	login.Logtype = r.Form.Get("logtype")
+    	login.Sessionid = r.Form.Get("sessionid")
+    	login.Tel = r.Form.Get("tel")
+    	cmd, _ := strconv.Atoi(r.Form.Get("cmd"))
+    	login.Cmd = cmd 
+    }
+	output, err := xml.MarshalIndent(login, "  ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
 	}
-	fmt.Fprintf(w, "Hello astaxie!")
+	err = ioutil.WriteFile("LoginInfo.xml", output, 0777)
+	if err != nil {
+		fmt.Printf("write file error: %v\n", err)
+	}
 	//查询数据
 	rows, err := db.Query("SELECT * FROM userinfo")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var bExist bool
+    var bExist bool
 
     for rows.Next() {
 		var uid int
@@ -117,23 +136,29 @@ func DealRequst(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(created)
 
 
-        fmt.Println("login2: ", login2.Operator)
 		//检测用户名是否存在，存在且sessionid也存在登录成功
-    	if login2.Operator == username && login2.Sessionid == sessionid {
+    	if strings.Compare(login.Operator, username) == 0 {
             //成功
             bExist = true
-            fmt.Sprintf("%s 登录成功", username)
+            str := fmt.Sprintf("%s 登录成功", username)
+            fmt.Println(str)
+            loginResp := NewLoginResp()
+            b, err := json.Marshal(loginResp)
+            if err != nil {
+                fmt.Println("login resp json : ", b)
+            }
+            fmt.Fprint(w, string(b))
     	}
     }
 
     if !bExist { 
-         fmt.Println("新增记录")
+        fmt.Println("新增记录")
         stmt, err := db.Prepare("insert into userinfo(user, sessionid, logtype, tel, created) values(?,?,?,?,?)")
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer stmt.Close()
-		res, err := stmt.Exec(login2.Operator, login2.Sessionid, login2.Logtype, login2.Tel, time.Now())
+		res, err := stmt.Exec(login.Operator, login.Sessionid, login.Logtype, login.Tel, time.Now())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -141,8 +166,46 @@ func DealRequst(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Print(id)
+		fmt.Println(id)
+        loginResp := NewLoginResp()
+        b, err := json.Marshal(loginResp)
+        if err != nil {
+            fmt.Println("new add login resp json : ", b)
+        }
+        fmt.Fprint(w, string(b))
     }
+}
+
+func  dealFlightInfo(w http.ResponseWriter, r *http.Request) {
+    jsonstruct := NewJsonStruct()
+    flight := &FlightInfoResp{}
+    jsonstruct.Load("./flight.json", flight)
+    fmt.Println(flight.Errorcode)
+    for _, v := range flight.Flight {
+        fmt.Println(v.AirLine)
+    }
+    b, err := json.Marshal(flight)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Fprint(w, string(b))
+}
+
+func dealOriginInfo(w http.ResponseWriter, r *http.Request) {
+    data, err := ioutil.ReadFile("./origon.json")
+    if err != nil {
+       log.Fatal(err)
+    }
+    fmt.Fprint(w, string(data))
+}
+
+
+func dealFlisiteInfo(w http.ResponseWriter, r *http.Request) {
+    data, err := ioutil.ReadFile("./flisite.json")
+    if err != nil {
+       log.Fatal(err)
+    }
+    fmt.Fprint(w, string(data))
 }
 
 

@@ -1,0 +1,36 @@
+{
+	"errorcode" : 0,
+	"msg" : "9A",
+	"orginfo" : [
+	  {
+		 "OrganDesc" : "",
+		 "OrganID" : "00000001",
+		 "OrganName" : "长沙机场机位列表",
+		 "UpOrganID" : ""
+	  },
+	  {
+		 "OrganDesc" : "T1",
+		 "OrganID" : "00000002",
+		 "OrganName" : "T1",
+		 "UpOrganID" : "00000001"
+	  },
+	  {
+		 "OrganDesc" : "T2-A区",
+		 "OrganID" : "00000003",
+		 "OrganName" : "T2-A区",
+		 "UpOrganID" : "00000001"
+	  },
+	  {
+		 "OrganDesc" : "T2-B区",
+		 "OrganID" : "00000004",
+		 "OrganName" : "T2-B区",
+		 "UpOrganID" : "00000001"
+	  },
+	  {
+		 "OrganDesc" : "T2-C区",
+		 "OrganID" : "00000005",
+		 "OrganName" : "T2-C区",
+		 "UpOrganID" : "00000001"
+	  }
+	]
+}

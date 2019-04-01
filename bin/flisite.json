@@ -1,0 +1,66 @@
+{
+   "errorcode" : 0,
+   "fltsiteinfo" : [
+	  {
+		 "FSiteID" : "00000001",
+		 "FSiteName" : "机位#10",
+		 "FlightSite" : "10",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000002",
+		 "FSiteName" : "机位#09",
+		 "FlightSite" : "09",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000003",
+		 "FSiteName" : "机位#08",
+		 "FlightSite" : "08",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000004",
+		 "FSiteName" : "机位#07",
+		 "FlightSite" : "07",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000005",
+		 "FSiteName" : "机位#06",
+		 "FlightSite" : "06",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000006",
+		 "FSiteName" : "机位#05",
+		 "FlightSite" : "05",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000007",
+		 "FSiteName" : "机位#04",
+		 "FlightSite" : "04",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000008",
+		 "FSiteName" : "机位#03",
+		 "FlightSite" : "03",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000009",
+		 "FSiteName" : "机位#02",
+		 "FlightSite" : "02",
+		 "OrganID" : "00000002"
+	  },
+	  {
+		 "FSiteID" : "00000010",
+		 "FSiteName" : "机位#01",
+		 "FlightSite" : "01",
+		 "OrganID" : "00000002"
+	  }
+   ],
+   "msg" : "9B"
+}
