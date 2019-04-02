@@ -20,10 +20,17 @@ import (
 	"unsafe"
 	"strconv"
 	"time"
+	"bufio"
+	"github.com/ylywyn/jpush-api-go-client"
 )
 
 const maxUploadSize = 2 * 1024 * 2014 // 2 MB
 const uploadPath = "./tmp"
+
+const (
+        appKey = "f3a2663af037607dce08da9f"
+        secret = "gse123"
+)
 
 type LoginInfo struct {
 	XMLName   xml.Name `xml."Login"`
@@ -42,6 +49,8 @@ type Photo struct {
 
 var db *sql.DB
 var err error
+
+var htt_w http.ResponseWriter
 
 func stringtoslicebyte(s string) []byte {
 	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
@@ -64,6 +73,7 @@ func slicebytetostring(b []byte) string {
 
 func DealRequst(w http.ResponseWriter, r *http.Request) {
     if r.Method == "GET" {
+        htt_w = w
     	r.ParseForm()
     	fmt.Println(r.Form)
     	fmt.Println("path", r.URL.Path)
@@ -74,7 +84,8 @@ func DealRequst(w http.ResponseWriter, r *http.Request) {
             case GSE_LOGIN_REQUEST:
                 dealLoginReq(w,r)
             case GSE_GET_FLIGHT:
-                dealFlightInfo(w,r)
+                //dealFlightInfo(w,r)
+                dealDispatchInfo(w,r)
             case GSE_GET_ORIGIN:
                 //do here
                 dealOriginInfo(w,r)
@@ -208,6 +219,14 @@ func dealFlisiteInfo(w http.ResponseWriter, r *http.Request) {
     fmt.Fprint(w, string(data))
 }
 
+func dealDispatchInfo(w http.ResponseWriter, r *http.Request) {
+    data, err := ioutil.ReadFile("./dispatch.json")
+    if err != nil {
+       log.Fatal(err)
+    }
+    fmt.Fprint(w, string(data))
+}
+
 
 func OnInput(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
@@ -317,6 +336,76 @@ func getAllinfor(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
+//监控键盘输入
+*/
+func scanKeyln() {
+    /*
+    for {
+        cmdReader := bufio.NewReader(os.Stdin)
+        cmdStr, err := cmdReader.ReadString('\n')
+        if err != nil {
+            log.Fatal(err)
+        }
+        //这里把读取的数据后面的换行去掉，对于Mac是"\r"，Linux下面*
+        //是"\n"，Windows下面是"\r\n"，所以为了支持多平台，直接用
+        //"\r\n"作为过滤字符
+        cmdStr = strings.Trim(cmdStr, "\r\n")
+        fmt.Println(cmdStr)
+     }*/
+     
+    
+    scanner := bufio.NewScanner(os.Stdin)
+    for scanner.Scan() {
+        if strings.Compare(scanner.Text(), "d") == 0 {
+            /*
+            fmt.Println("send flight dispatch cmd [07]")
+            data, err := ioutil.ReadFile("./disp3.json")
+            if err != nil {
+            log.Fatal(err)
+            }
+            fmt.Println("send flight dispatch cmd data: ",string(data))
+            fmt.Fprint(htt_w, string(data))
+            */
+            jpush()
+        }
+    }
+}
+
+func jpush() {
+    var pf jpushclient.Platform
+    pf.Add(jpushclient.ANDROID)
+    //Audience
+	var ad jpushclient.Audience
+	s := []string{"CGO_B012", "com.gse.client"}
+	//ad.SetTag(s)
+	ad.SetAlias(s[0:1])
+	ad.SetID(s[1:])
+	//Notice
+	var notice jpushclient.Notice
+	notice.SetAlert("alert_test")
+	notice.SetAndroidNotice(&jpushclient.AndroidNotice{Alert: "AndroidNotice"})
+	var msg jpushclient.Message
+	msg.Title = "Hello"
+	msg.Content = "你是ylywn"
+	payload := jpushclient.NewPushPayLoad()
+	payload.SetPlatform(&pf)
+	payload.SetAudience(&ad)
+	payload.SetMessage(&msg)
+	payload.SetNotice(&notice)
+	bytes, _ := payload.ToBytes()
+	fmt.Printf("%s\r\n", string(bytes))
+
+	//push
+	c := jpushclient.NewPushClient(secret, appKey)
+	str, err := c.Send(bytes)
+	if err != nil {
+		fmt.Printf("err:%s", err.Error())
+	} else {
+		fmt.Printf("ok:%s", str)
+	}
+}
+
 func main() {
 	db, err = sql.Open("sqlite3", "my.db")
 	if err != nil {
@@ -338,6 +427,8 @@ func main() {
 		log.Printf("%q: %s\n", err, sql_table)
 		return
 	}
+	go scanKeyln()
+	
 	http.HandleFunc("/", DealRequst)
 	//http.HandleFunc("/", OnInput)
 	http.HandleFunc("/uploadJson", uploadjson)
