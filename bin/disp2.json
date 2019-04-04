@@ -2,7 +2,8 @@
 	"CmbID" : 813287,
 	"CmdIndex" : 0,
 	"FlightID" : "5455037",
-	"Cmd" : "0"
+	"Cmd" : "0",
 	"Time" : "2019-04-02 11:18:00",
-	"Bridge" "10"
+	"Bridge" : "10",
+	"msg" : "07"
 }

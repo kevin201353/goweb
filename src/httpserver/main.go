@@ -28,8 +28,8 @@ const maxUploadSize = 2 * 1024 * 2014 // 2 MB
 const uploadPath = "./tmp"
 
 const (
-        appKey = "f3a2663af037607dce08da9f"
-        secret = "gse123"
+        appKey = "8a299518514986378a491dec"
+        secret = "3d645e3462732e0c1e1e6c88"
 )
 
 type LoginInfo struct {
@@ -380,19 +380,27 @@ func jpush() {
 	s := []string{"CGO_B012", "com.gse.client"}
 	//ad.SetTag(s)
 	ad.SetAlias(s[0:1])
-	ad.SetID(s[1:])
+	//ad.SetID(s[1:])
+
+	/*
 	//Notice
 	var notice jpushclient.Notice
 	notice.SetAlert("alert_test")
 	notice.SetAndroidNotice(&jpushclient.AndroidNotice{Alert: "AndroidNotice"})
+	*/
 	var msg jpushclient.Message
-	msg.Title = "Hello"
-	msg.Content = "你是ylywn"
+	msg.Title = "dispatch"
+	data, err := ioutil.ReadFile("./disp2.json")
+    if err != nil {
+       log.Fatal(err)
+    }
+    msg.Content = string(data)
 	payload := jpushclient.NewPushPayLoad()
 	payload.SetPlatform(&pf)
 	payload.SetAudience(&ad)
 	payload.SetMessage(&msg)
-	payload.SetNotice(&notice)
+	
+	//payload.SetNotice(&notice)
 	bytes, _ := payload.ToBytes()
 	fmt.Printf("%s\r\n", string(bytes))
 
