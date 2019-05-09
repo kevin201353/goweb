@@ -13,6 +13,9 @@ const GSE_GET_FLIGHT                 string = "78"
 const GSE_GET_ORIGIN                 string = "9A"
 const GSE_GET_FLISITE                string = "9B"
 const GSE_GET_FLIGHT9C               string = "9C"
+const GSE_GET_ATC                    string = "111"
+const GSE_UPLOAD_PHOTO               string = "C2"
+
 
 
 

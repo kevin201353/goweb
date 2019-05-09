@@ -1,0 +1,12 @@
+.mSign_signMark_box{padding: 15px 15px 26px 15px;}
+.mSign_signMark_footer{max-width:640px;margin:0 auto;height: 44px;background: #4ba7eb;position: fixed;bottom: 0;left: 0;right: 0;color:#fff;font-size: 16px;text-align: center;line-height: 44px;}
+.mSign_signMark_footer span{display: block;width: 50%;text-align: center;float: left;}
+.mSign_signMark_footer_cancle{background: #f4f4f5;color: #333333;}
+/*手写签名*/
+.mSign_signMark_write_box{position: relative;height: 240px;}
+.mSign_signMark_body_box {position: absolute;background-color: #fff;border: 1px solid #ccc;top:0;left: 0;right: 0;bottom: 0;width: 99%;height: auto;min-width: 250px;min-height: 140px;}
+.mSign_signMark_body {position: absolute;left: 0;right: 0;top: 0;bottom: 0;}
+.mSign_signMark_body canvas {position: absolute;left: 0;top: 0;width: 100%;height: 100%;}
+.mSign_signMark_body p{position: absolute;font-size: 14px;color: #ccc;text-align: center;width: 100%;top: 50%;margin-top: -22px;}
+.mSign_signMark_clear_out{position: absolute;top:-10px;right: -5px;z-index: 10;display: none;}
+.mSign_signMark_clear_out img{width: 18px;height: 18px;}

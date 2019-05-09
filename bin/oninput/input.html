@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<script>
+function onClick()
+{
+	//x = document.getElementById("firstname");  // 找到元素
+	//y = document.getElementById("lastname");  // 找到元素
+	//alert(x.value + y.value)
+	jsObj.goAppCamera();
+}
+
+function cameraResult(va1)
+{
+	x = document.getElementById("img");
+	x.src = va1;
+}
+
+function onSigned()
+{
+	jsObj.goSigned();
+}
+
+function onSigned2()
+{
+	 exportSignature();
+}
+</script>
+</head>
+<body>
+
+<form>
+First name:<br>
+<input id="firstname" type="text" name="firstname">
+<br>
+Last name:<br>
+<input id="lastname" type="text" name="lastname">
+</form>
+
+<p>请注意表单本身是不可见的。</p>
+
+<p>同时请注意文本字段的默认宽度是 20 个字符。</p>
+<button type="button" onclick="onClick()" >拍照</button></br>
+<button type="button" onclick="onSigned()">签名</button></br>
+<button type="button" onclick="onSigned2()">签名2</button></br>
+<img id="img" src="" width="100" height="100" />
+
+</body>
+</html>

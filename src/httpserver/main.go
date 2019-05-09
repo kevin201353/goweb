@@ -80,24 +80,52 @@ func DealRequst(w http.ResponseWriter, r *http.Request) {
     	fmt.Println("scheme", r.URL.Scheme)
     	//cmd, _ := strconv.Atoi(r.Form.Get("cmd"))
     	cmd := r.Form.Get("cmd")
-    	switch cmd {
-            case GSE_LOGIN_REQUEST:
-                dealLoginReq(w,r)
-            case GSE_GET_FLIGHT:
-                //dealFlightInfo(w,r)
-                dealDispatchInfo(w,r)
-            case GSE_GET_ORIGIN:
-                //do here
-                dealOriginInfo(w,r)
-            case GSE_GET_FLISITE:
-                //do here
-                dealFlisiteInfo(w,r)
-            case GSE_GET_FLIGHT9C:
-                //do here
-                dealFlightInfo(w,r)
-            default: break
-    	}
+    	if cmd == "" {
+        	tmpl := template.Must(template.ParseFiles("./input.html"))
+    		err := tmpl.Execute(w, nil)
+    		if err != nil {
+    			log.Fatalf("template execution: %s", err)
+    		}
+    	}else{
+        	switch cmd {
+                case GSE_LOGIN_REQUEST:
+                    dealLoginReq(w,r)
+                case GSE_GET_FLIGHT:
+                    //dealFlightInfo(w,r)
+                    dealDispatchInfo(w,r)
+                case GSE_GET_ORIGIN:
+                    //do here
+                    dealOriginInfo(w,r)
+                case GSE_GET_FLISITE:
+                    //do here
+                    dealFlisiteInfo(w,r)
+                case GSE_GET_FLIGHT9C:
+                    //do here
+                    dealFlightInfo(w,r)
+                case GSE_GET_ATC:
+                    tmpl := template.Must(template.ParseFiles("./input.html"))
+            		err := tmpl.Execute(w, nil)
+            		if err != nil {
+            			log.Fatalf("template execution: %s", err)
+            		}
+            		fmt.Println("get input.html")
+                default: break
+        	}
+        }
     }//if method
+
+    /*
+    //post
+    if r.Method == "POST" {
+        fmt.Println("post upload photo.")
+        b, err := ioutil.ReadAll(r.Body)
+        if err != nil {
+        	log.Println("uploadPhoto11 Read failed:", err)
+        }
+        defer r.Body.Close()
+        fmt.Println("json data: ", b)
+    }
+    */
 }
 
 
@@ -234,7 +262,7 @@ func OnInput(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(r.Form)
 		fmt.Println("path", r.URL.Path)
 		fmt.Println("scheme", r.URL.Scheme)
-		tmpl := template.Must(template.ParseFiles("input.html"))
+		tmpl := template.Must(template.ParseFiles("./input.html"))
 		err := tmpl.Execute(w, nil)
 		if err != nil {
 			log.Fatalf("template execution: %s", err)
