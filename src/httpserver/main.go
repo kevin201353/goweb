@@ -465,8 +465,8 @@ func main() {
 	}
 	go scanKeyln()
 	
-	http.HandleFunc("/", DealRequst)
-	//http.HandleFunc("/", OnInput)
+	//http.HandleFunc("/", DealRequst)
+	http.HandleFunc("/", OnInput)
 	http.HandleFunc("/uploadJson", uploadjson)
 	http.HandleFunc("/upgernal", upgernal)
 	http.HandleFunc("/getAllinfor", getAllinfor)
